@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Search, Route, X, Trash2, Clock, MapPin } from 'lucide-react'
+import { Search, Route, X, Trash2, Clock, MapPin, Lock, Archive } from 'lucide-react'
 import { useSceneStore } from '@/store/useSceneStore'
 import {
   formatTimestamp,
@@ -11,7 +11,7 @@ import {
 import type { WindowScene } from '@/types'
 
 export default function TimelinePage() {
-  const { routeNames, selectedRoute, currentRouteScenes, selectRoute, loadAll, deleteScene } =
+  const { routeNames, selectedRoute, currentRouteScenes, selectRoute, loadAll, deleteScene, batches } =
     useSceneStore()
   const [search, setSearch] = useState('')
   const [detailScene, setDetailScene] = useState<WindowScene | null>(null)
@@ -27,6 +27,9 @@ export default function TimelinePage() {
   const sorted = [...currentRouteScenes].sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   )
+
+  const batchOf = (scene: WindowScene) =>
+    scene.batchId ? batches.find((b) => b.id === scene.batchId) : undefined
 
   const handleDelete = (id: string) => {
     deleteScene(id)
@@ -83,7 +86,7 @@ export default function TimelinePage() {
           <div className="flex flex-col items-center justify-center py-24 text-mist-400">
             <div className="mb-4 text-6xl opacity-30">🪟</div>
             <p className="text-lg">
-              {selectedRoute ? '该路线暂无窗景记录' : '选择一条路线，开始浏览窗景'}
+              {selectedRoute ? '该线路暂无已封存的采风记录' : '批次封存后，窗景会出现在这里'}
             </p>
           </div>
         ) : (
@@ -116,6 +119,16 @@ export default function TimelinePage() {
                       <span className="text-xs">{scene.routeName}</span>
                       <span className="mx-1 text-teal-700">·</span>
                       <span className="text-xs">{scene.seatDirection}侧</span>
+                      {!scene.batchId && (
+                        <span className="ml-1 rounded bg-teal-800/70 px-1.5 py-0.5 text-[10px] text-mist-400">
+                          旧记录
+                        </span>
+                      )}
+                      {batchOf(scene) && (
+                        <span className="ml-1 inline-flex items-center gap-0.5 rounded bg-mist-400/10 px-1.5 py-0.5 text-[10px] text-mist-300">
+                          <Lock className="w-2.5 h-2.5" />已封存
+                        </span>
+                      )}
                     </div>
                     {scene.note && (
                       <p className="text-xs text-mist-400 line-clamp-2">
@@ -189,15 +202,31 @@ export default function TimelinePage() {
                   {detailScene.note}
                 </div>
               )}
+              <div className="flex items-center gap-1.5 text-[11px] text-mist-500">
+                {detailScene.batchId ? (
+                  <span className="inline-flex items-center gap-1 rounded bg-mist-400/10 px-2 py-1 text-mist-300">
+                    <Archive className="w-3 h-3" />来自已封存批次
+                  </span>
+                ) : (
+                  <span className="rounded bg-teal-800/70 px-2 py-1">未归批次的旧记录</span>
+                )}
+              </div>
             </div>
 
-            <button
-              onClick={() => handleDelete(detailScene.id)}
-              className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-red-900/40 py-2.5 text-sm text-red-300 transition-colors hover:bg-red-900/60"
-            >
-              <Trash2 className="w-4 h-4" />
-              删除此窗景
-            </button>
+            {detailScene.batchId ? (
+              <div className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-teal-850/60 py-2.5 text-xs text-mist-500">
+                <Lock className="w-4 h-4" />
+                封存批次的记录不可删除
+              </div>
+            ) : (
+              <button
+                onClick={() => handleDelete(detailScene.id)}
+                className="mt-5 flex w-full items-center justify-center gap-2 rounded-lg bg-red-900/40 py-2.5 text-sm text-red-300 transition-colors hover:bg-red-900/60"
+              >
+                <Trash2 className="w-4 h-4" />
+                删除此旧记录
+              </button>
+            )}
           </div>
         </div>
       )}

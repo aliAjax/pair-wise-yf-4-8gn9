@@ -1,4 +1,4 @@
-import type { Weather, TreeDensity, PedestrianStatus } from '@/types'
+import type { Weather, TreeDensity, PedestrianStatus, WindowScene } from '@/types'
 import {
   Sun, Cloud, CloudRain, CloudDrizzle, CloudSnow, CloudFog,
   TreePine, TreePine as TreeSparse, Trees,
@@ -71,3 +71,40 @@ export const WRITING_PROMPTS = [
   '用天气和行人密度写一段氛围描写',
   '把窗景当作一幅画，为它写一段策展词',
 ]
+
+/* ---------------------------- 批次相关 ---------------------------- */
+
+/** 有效记录：笔记非空且未标记待复核，才计入进度 */
+export function getValidCount(scenes: WindowScene[]): number {
+  return scenes.filter((s) => !s.needsReview && s.note.trim().length > 0).length
+}
+
+export function getReviewCount(scenes: WindowScene[]): number {
+  return scenes.filter((s) => s.needsReview).length
+}
+
+export function getEmptyNoteCount(scenes: WindowScene[]): number {
+  return scenes.filter((s) => !s.needsReview && s.note.trim().length === 0).length
+}
+
+/** 仅显示日期的截止时间格式：2026/09/20 18:30 */
+export function formatDeadline(iso: string): string {
+  return formatTimestamp(iso)
+}
+
+export function isOverdue(deadlineIso: string, now = new Date()): boolean {
+  return new Date(deadlineIso).getTime() < now.getTime()
+}
+
+/** 转为 datetime-local 输入框需要的本地时间字符串 */
+export function toLocalDatetimeInput(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+/** 默认截止时间：明天此刻 */
+export function defaultDeadlineInput(): string {
+  const d = new Date()
+  d.setDate(d.getDate() + 1)
+  return toLocalDatetimeInput(d)
+}

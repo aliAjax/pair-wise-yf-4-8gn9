@@ -11,7 +11,7 @@ import {
 import { Lightbulb, RefreshCw, Quote, Bus, ArrowRight } from 'lucide-react'
 
 export default function InspirePage() {
-  const { randomScene, refreshRandom, loadAll, scenes } = useSceneStore()
+  const { randomScene, refreshRandom, loadAll, readableScenes, batches } = useSceneStore()
   const [revealed, setRevealed] = useState(false)
   const [displayedPrompt, setDisplayedPrompt] = useState('')
   const [isTyping, setIsTyping] = useState(false)
@@ -20,6 +20,9 @@ export default function InspirePage() {
   useEffect(() => {
     loadAll()
   }, [loadAll])
+
+  const sealedIds = new Set(batches.filter((b) => b.status === 'sealed').map((b) => b.id))
+  const sealedCount = readableScenes.filter((s) => s.batchId && sealedIds.has(s.batchId)).length
 
   useEffect(() => {
     if (!revealed || !randomScene) return
@@ -57,12 +60,12 @@ export default function InspirePage() {
     }, 400)
   }, [refreshRandom])
 
-  if (scenes.length === 0) {
+  if (sealedCount === 0) {
     return (
       <div className="min-h-screen bg-teal-950 flex flex-col items-center justify-center px-6 text-center">
         <Bus className="w-16 h-16 text-dusk-400/40 mb-6" />
-        <p className="text-mist-100 text-lg font-serif mb-2">还没有窗景记录</p>
-        <p className="text-mist-400 text-sm">先去记录一段窗景，才能在这里采集灵感</p>
+        <p className="text-mist-100 text-lg font-serif mb-2">还没有已封存的采风批次</p>
+        <p className="text-mist-400 text-sm">先建立批次并完成采风、封存后，才能在这里采集灵感</p>
       </div>
     )
   }
@@ -121,7 +124,7 @@ export default function InspirePage() {
             </div>
 
             <p className="text-mist-100 font-serif text-xl leading-relaxed tracking-wide">
-              {randomScene.note}
+              {randomScene.note || <span className="text-mist-500 text-base">（这条记录没有留下笔记）</span>}
             </p>
 
             <div className="flex flex-wrap gap-2">
