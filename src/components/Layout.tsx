@@ -17,7 +17,7 @@ export default function Layout() {
           </div>
           <div>
             <h1 className="font-serif text-mist-100 text-lg font-semibold leading-tight">窗景采样器</h1>
-            <p className="text-mist-500 text-xs">公交车窗的观察笔记</p>
+            <p className="text-mist-500 text-xs">公交车窗的线路采风</p>
           </div>
         </div>
 

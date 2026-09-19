@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { useSceneStore } from '@/store/useSceneStore'
 import {
   WRITING_PROMPTS,
@@ -8,10 +8,10 @@ import {
   formatTimestamp,
   getTimeOfDay,
 } from '@/utils/sceneHelpers'
-import { Lightbulb, RefreshCw, Quote, Bus, ArrowRight } from 'lucide-react'
+import { Lightbulb, RefreshCw, Quote, Bus, ArrowRight, Lock } from 'lucide-react'
 
 export default function InspirePage() {
-  const { randomScene, refreshRandom, loadAll, scenes } = useSceneStore()
+  const { randomScene, refreshRandom, loadAll, scenes, batches } = useSceneStore()
   const [revealed, setRevealed] = useState(false)
   const [displayedPrompt, setDisplayedPrompt] = useState('')
   const [isTyping, setIsTyping] = useState(false)
@@ -20,6 +20,19 @@ export default function InspirePage() {
   useEffect(() => {
     loadAll()
   }, [loadAll])
+
+  /** 灵感池只读取已封存批次；未归批次与开放批次的记录不参与 */
+  const sealedRouteSet = useMemo(
+    () => new Set(batches.filter((b) => b.status === 'sealed').map((b) => b.id)),
+    [batches],
+  )
+  const hasSealedMaterial = useMemo(
+    () =>
+      scenes.some(
+        (s) => s.batchId !== null && sealedRouteSet.has(s.batchId) && s.note.trim().length > 0,
+      ),
+    [scenes, sealedRouteSet],
+  )
 
   useEffect(() => {
     if (!revealed || !randomScene) return
@@ -57,12 +70,12 @@ export default function InspirePage() {
     }, 400)
   }, [refreshRandom])
 
-  if (scenes.length === 0) {
+  if (!hasSealedMaterial) {
     return (
       <div className="min-h-screen bg-teal-950 flex flex-col items-center justify-center px-6 text-center">
-        <Bus className="w-16 h-16 text-dusk-400/40 mb-6" />
-        <p className="text-mist-100 text-lg font-serif mb-2">还没有窗景记录</p>
-        <p className="text-mist-400 text-sm">先去记录一段窗景，才能在这里采集灵感</p>
+        <Lock className="w-16 h-16 text-dusk-400/40 mb-6" />
+        <p className="text-mist-100 text-lg font-serif mb-2">还没有已封存的采风批次</p>
+        <p className="text-mist-400 text-sm">先去建立批次、补足记录并封存，灵感只从封存批次中采集</p>
       </div>
     )
   }
